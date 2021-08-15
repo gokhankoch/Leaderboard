@@ -1,0 +1,4 @@
+client/node_modules/
+leaderboard-service/node_modules/
+schedule-task-service/node_modules/
+user-service/node_modules/

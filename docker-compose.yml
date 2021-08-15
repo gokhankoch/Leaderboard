@@ -1,0 +1,108 @@
+version: '3.7'
+# all the containers have to declare inside services
+services:
+
+  client: 
+  # application rely on user-service and leaderboard-service
+    depends_on:
+      - user-service
+      - leaderboard-service
+      # this build context will take the commands from Dockerfile
+    build:
+      context: ./client    
+      dockerfile: Dockerfile
+
+    restart: always
+    
+    ports:
+      - '${CLIENT_PORT}:${CLIENT_PORT}'
+
+    environment:
+      USER_SERVICE_PORT: ${USER_SERVICE_PORT}
+      LEADERPORT_SERVICE_PORT: ${LEADERPORT_SERVICE_PORT}
+
+  user-service: 
+  # application rely on redis and mongo
+    depends_on:
+      - redis
+      - mongo
+      # this build context will take the commands from Dockerfile
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+
+    restart: always
+    
+    ports:
+      - '${USER_SERVICE_PORT}:${USER_SERVICE_PORT}'
+
+    environment:
+      PORT: ${USER_SERVICE_PORT}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+
+  leaderboard-service:
+   # application rely on redis
+    depends_on:
+      - redis
+      # this build context will take the commands from Dockerfile
+    build:
+      context: ./leaderboard-service
+      dockerfile: Dockerfile
+
+    restart: always
+   
+    ports:
+      - '${LEADERPORT_SERVICE_PORT}:${LEADERPORT_SERVICE_PORT}'
+
+    environment:
+      PORT: ${LEADERPORT_SERVICE_PORT}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+
+  schedule-task-service:
+   # application rely on redis and mongo
+    depends_on:
+      - redis
+      - mongo
+      # this build context will take the commands from Dockerfile
+    build:
+      context: ./schedule-task-service
+      dockerfile: Dockerfile
+
+    restart: always
+   
+    ports:
+      - '${SCHEDULE_TASK_SERVICE_PORT}:${SCHEDULE_TASK_SERVICE_PORT}'
+    
+    environment:
+      PORT: ${SCHEDULE_TASK_SERVICE_PORT}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+
+  mongo:
+    container_name: mongo
+    image: mongo:latest
+    volumes:
+      - mongodb:/data/db
+    ports:
+      - '${MONGO_PORT}:${MONGO_PORT}'
+  redis:
+    # image name
+    image: redis:latest
+    # container name
+    container_name: redis
+    # execute the command once start redis container
+    command: [
+        "redis-server",
+        "--bind",
+        '${REDIS_HOST}',
+        "--port",
+        '${REDIS_PORT}'
+    ]
+    # redis port, this is take value from env file
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+volumes:
+ mongodb:
+  
